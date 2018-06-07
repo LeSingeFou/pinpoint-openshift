@@ -1,0 +1,194 @@
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: pinpoint
+  name: pinpoint
+spec:
+  replicas: 1
+  selector:
+    io.kompose.service: pinpoint
+  strategy:
+    resources: {}
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: pinpoint
+    spec:
+      hostname: pinpoint-server
+      containers:
+      - image:  pinpoint-hbase:latest
+        imagePullPolicy: IfNotPresent
+        name: pinpoint-hbase
+        ports:
+        - containerPort: 2181
+        - containerPort: 60000
+        - containerPort: 16010
+        - containerPort: 60020
+        - containerPort: 16030
+        resources: {}
+#        volumeMounts:
+#        - mountPath: ./home/pinpoint/hbase
+#          name: pinpoint-hbase-claim0
+#        - mountPath: ./home/pinpoint/zookeeper
+#          name: pinpoint-hbase-claim1
+      - env:
+        - name: ADMIN_PASSWORD
+          value : "admin123"
+        - name: ANALYTICS
+          value: ""
+        - name: BATCH_ENABLE
+          value: "false"
+        - name: BATCH_FLINK_SERVER
+          value: "none"
+        - name: BATCH_SERVER_IP
+          value: "none"
+        - name: CLUSTER_ENABLE
+          value: "false"
+        - name: CLUSTER_ZOOKEEPER_ADDRESS
+          value: "none"
+        - name: CONFIG_SHOW_APPLICATIONSTAT
+          value: "true"
+        - name: DEBUG_LVEL
+          value: "DEBUG"
+        - name: HBASE_HOST
+          value: "pinpoint-server"
+        - name: HBASE_PORT
+          value: "2181"
+        image:  pinpoint-web:latest
+        imagePullPolicy: IfNotPresent
+        name: pinpoint-web
+        ports:
+        - containerPort: 9997
+        - containerPort: 8080
+      - env:
+        - name: CLUSTER_ENABLE
+          value: "false"
+        - name: CLUSTER_ZOOKEEPER_ADDRESS
+          value: "none"
+        - name: DEBUG_LEVEL
+          value: "DEBUG"
+        - name: FLINK_CLUSTER_ENABLE
+          value: "false"
+        - name: FLINK_CLUSTER_ZOOKEEPER_ADDRESS
+          value: "none"
+        - name: HBASE_HOST
+          value: "pinpoint-server"
+        - name: HBASE_PORT
+          value: "2181"
+        image:  pinpoint-collector:latest
+        name: pinpoint-collector
+        ports:
+        - containerPort: 9994
+        - containerPort: 9995
+        - containerPort: 9996
+        - containerPort: 9997
+        - containerPort: 9998
+        - containerPort: 9995
+          protocol: UDP
+        - containerPort: 9996
+          protocol: UDP
+        resources: {}
+      restartPolicy: Always
+#      volumes:
+#      - name: pinpoint-hbase-claim0
+#        persistentVolumeClaim:
+#          claimName: pinpoint-hbase-claim0
+#      - name: pinpoint-hbase-claim1
+#        persistentVolumeClaim:
+#          claimName: pinpoint-hbase-claim1
+  test: false
+  triggers:
+  - type: ConfigChange
+  - imageChangeParams:
+      automatic: true
+      containerNames:
+      - pinpoint-web
+      from:
+        kind: ImageStreamTag
+        name: pinpoint-web:latest
+    type: ImageChange
+  - imageChangeParams:
+      automatic: true
+      containerNames:
+      - pinpoint-collector
+      from:
+        kind: ImageStreamTag
+        name: pinpoint-collector:latest
+    type: ImageChange
+  - imageChangeParams:
+      automatic: true
+      containerNames:
+      - pinpoint-hbase
+      from:
+        kind: ImageStreamTag
+        name: pinpoint-hbase:latest
+    type: ImageChange
+-----------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: pinpoint
+  name: pinpoint
+spec:
+  ports:
+  - name: "2181"
+    port: 2181
+    targetPort: 2181
+  - name: "60000"
+    port: 60000
+    targetPort: 60000
+  - name: "16010"
+    port: 16010
+    targetPort: 16010
+  - name: "60020"
+    port: 60020
+    targetPort: 60020
+  - name: "16030"
+    port: 16030
+    targetPort: 16030
+  - name: "web"
+    port: 8080
+    targetPort: 8080
+  - name: "9994"
+    port: 9994
+    targetPort: 9994
+  - name: "9995"
+    port: 9995
+    targetPort: 9995
+  - name: "9996"
+    port: 9996
+    targetPort: 9996
+  - name: "9997"
+    port: 9997
+    targetPort: 9997
+  - name: "9998"
+    port: 9998
+    targetPort: 9998
+  - name: "9995udp"
+    port: 9995
+    protocol: UDP
+    targetPort: 9995
+  - name: "9996udp"
+    port: 9996
+    protocol: UDP
+    targetPort: 9996
+  selector:
+    io.kompose.service: pinpoint
+----------------------------------------------
+apiVersion: v1
+kind: Route
+metadata:
+  name: pinpoint-web
+spec:
+  to:
+    kind: Service
+    name: pinpoint
+    weight: 100
+  port:
+    targetPort: web
+  wildcardPolicy: None

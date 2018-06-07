@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Template
+parameters:
+ - name : BUILD_CONFIG_NAME
+   description : build name
+   value: pinpoint-test
+   required : true
+ - name : ARTIFACT_NAME
+   description : artifact name
+   value: pinpoint-test
+   required : true
+ - name : SYSTEM_VERSION
+   description : version
+   value: latest
+   required : true
+ - name: GIT_URL
+   value: "http://gitlab.edelia.net/niji/portal-custom-es.git"
+ - name: ARTIFACTORY_BASEPATH
+   value: "http://repo.edelia.net/artifactory/niji-release-local"
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: ${ARTIFACT_NAME}
+    labels:
+      app: ${ARTIFACT_NAME}
+    spec: {}
+- apiVersion: "v1"
+  kind: "BuildConfig"
+  metadata:
+    name: ${BUILD_CONFIG_NAME}
+    labels:
+      app: ${ARTIFACT_NAME}
+      version: ${SYSTEM_VERSION}
+  spec:
+    strategy: 
+      dockerStrategy:
+        dockerfilePath: Dockerfile
+        #noCache: true
+        env:
+        - name: SYSTEM_VERSION
+          value: ${SYSTEM_VERSION}
+        - name : ARTIFACTORY_BASEPATH
+          value: ${ARTIFACTORY_BASEPATH}
+    source:
+      git: 
+         uri: ${GIT_URL}
+         ref: ${SYSTEM_VERSION}
+    output:
+      to:
+        kind: "ImageStreamTag"
+        name: "${ARTIFACT_NAME}:${SYSTEM_VERSION}"
