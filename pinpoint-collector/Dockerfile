@@ -6,7 +6,7 @@ ARG PINPOINT_VERSION=${PINPOINT_VERSION:-1.7.3}
 
 ARG INSTALL_URL=https://github.com/naver/pinpoint/releases/download/${PINPOINT_VERSION}/pinpoint-collector-${PINPOINT_VERSION}.war
 
-ADD /build/scripts/start-collector.sh /usr/local/bin/
+ADD build/scripts/start-collector.sh /usr/local/bin/
 
 RUN apt-get update && apt-get install net-tools -y && apt-get install lsof -y && apt-get install procps -y
 
