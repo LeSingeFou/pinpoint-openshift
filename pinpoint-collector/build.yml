@@ -43,7 +43,6 @@ objects:
     source:
       git: 
          uri: ${GIT_URL}
-         ref: ${SYSTEM_VERSION}
     output:
       to:
         kind: "ImageStreamTag"
