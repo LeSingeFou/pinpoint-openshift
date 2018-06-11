@@ -33,7 +33,7 @@ objects:
   spec:
     strategy: 
       dockerStrategy:
-        dockerfilePath: pinpoint-collector/Dockerfile
+        dockerfilePath: Dockerfile
         #noCache: true
         env:
         - name: SYSTEM_VERSION
